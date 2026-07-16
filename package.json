@@ -1,0 +1,32 @@
+{
+  "name": "marathon-coach-starter",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "import": "tsx scripts/import.ts && npm run build-history",
+    "build-history": "tsx scripts/build-history.ts",
+    "coach-data": "tsx scripts/coach-data.ts",
+    "plan-today": "tsx scripts/plan-today.ts",
+    "last-run": "tsx scripts/last-run.ts",
+    "fit-inspect": "tsx scripts/fit-inspect.ts",
+    "shoes": "tsx scripts/shoes.ts",
+    "status": "tsx scripts/status.ts",
+    "trends": "tsx scripts/trends.ts",
+    "zones": "tsx scripts/zones.ts",
+    "reprocess": "tsx scripts/reprocess.ts",
+    "recovery-merge": "tsx scripts/recovery-merge.ts",
+    "strava-inspect": "tsx scripts/strava-inspect.ts",
+    "strava-reauth": "tsx scripts/strava-reauth.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test test/*.test.ts"
+  },
+  "dependencies": {
+    "@garmin/fitsdk": "^21.208.0",
+    "dotenv": "^17.4.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "tsx": "^4.22.4",
+    "typescript": "^5"
+  }
+}

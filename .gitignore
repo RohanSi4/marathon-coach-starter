@@ -1,0 +1,20 @@
+# dependencies
+node_modules/
+
+# env (never commit credentials)
+.env*
+!.env.local.example
+
+# build artifacts
+.next/
+build/
+out/
+
+# data & logs (auto-generated)
+logs/
+
+# misc
+.DS_Store
+*.pem
+*.tsbuildinfo
+npm-debug.log*
