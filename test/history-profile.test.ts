@@ -69,24 +69,24 @@ function run(start: string, miles: number, suffix: string): StoredActivity {
 test("in-memory refresh includes late imports from the most recently completed week", () => {
   const now = new Date("2026-07-10T12:00:00-07:00");
   const activities = [
-    run("2026-06-30T15:00:00.000Z", 12.8, "early"),
-    run("2026-07-05T15:00:00.000Z", 8.3, "late"),
+    run("2026-06-30T15:00:00.000Z", 10.0, "early"),
+    run("2026-07-05T15:00:00.000Z", 6.5, "late"),
     run("2026-07-08T15:00:00.000Z", 9, "current"),
   ];
 
-  // This mirrors the stale-profile failure: a mid-week persisted row had 12.8mi,
-  // but a later import brought the completed Jun 29 week to 21.1mi.
+  // The stale-profile scenario: a mid-week persisted row saw only the first run,
+  // but a later import brought the completed week to its true total.
   const stale = baseline();
-  stale.weeks.push(week("Jun 29, 2026", 12.8));
+  stale.weeks.push(week("Jun 29, 2026", 10.0));
   const fresh = buildCompletedAthleteProfile(baseline(), activities, now, SPLICE).profile;
 
   assert.equal(fresh.weeks.at(-1)?.weekStarting, "Jun 29, 2026");
-  assert.equal(fresh.weeks.at(-1)?.runMiles, 21.1);
+  assert.equal(fresh.weeks.at(-1)?.runMiles, 16.5);
   assert.notEqual(
     computeACWR(fresh, 9, "Jul 6, 2026").chronic,
     computeACWR(stale, 9, "Jul 6, 2026").chronic
   );
-  assert.equal(computeACWR(fresh, 9, "Jul 6, 2026").chronic, 20.3);
+  assert.equal(computeACWR(fresh, 9, "Jul 6, 2026").chronic, 19.1);
 });
 
 test("completed history and race windows exclude the current partial week", () => {

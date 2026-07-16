@@ -4,65 +4,65 @@ import { parseNewestWeekPlan, planForDate, planWeekDays } from "../lib/plan-toda
 
 const LOG = `# Coaching Log
 
-## DATA CORRECTION (Jul 3, 2026 — no day lines here)
+## DATA CORRECTION (Feb 20, 2027 — no day lines here)
 Some prose about a correction.
 
-## Week of Jul 13–19, 2026 — Phase 1 (Base) · FIRST 30+ WEEK
+## Week of Mar 8–14, 2027 — Phase 1 (Base)
 **Tier: GREEN**
 
-**Prescribed (32.0mi):**
-- Sun 7/12: Rest from running + **LOWER #2** (light) + circuit
-- Mon 7/13: Easy 5mi ≤150 + 4×20s strides + **UPPER #1**
-- Sat 7/18 🎯: **LR 11.5mi easy, OUTDOORS** · gels ~40min + ~75min
+**Prescribed (25.0mi):**
+- Sun 3/7: Rest from running + **upper lift** + circuit
+- Mon 3/8: Easy 4mi ≤145 + 4×20s strides
+- Sat 3/13 🎯: **LR 9mi easy, outdoors** · gel ~45min
 
-## WEEK CLOSE-OUT Jul 6–12 (no day lines)
+## WEEK CLOSE-OUT Mar 1–7 (no day lines)
 Prose close-out.
 
-## Week of Jul 6–12, 2026 — older entry
-- Sun 7/5: Rest + UPPER #2
-- Mon 7/6: Easy 4mi ≤148
+## Week of Mar 1–7, 2027 — older entry
+- Sun 2/28: Rest + upper lift
+- Mon 3/1: Easy 4mi ≤145
 `;
 
 test("parses the newest week section with day lines", () => {
   const plan = parseNewestWeekPlan(LOG);
   assert.ok(plan);
-  assert.match(plan!.heading, /Week of Jul 13–19, 2026/);
-  assert.equal(plan!.weekStart, "2026-07-13");
-  assert.equal(plan!.weekEnd, "2026-07-19");
-  assert.equal(plan!.prescribedMiles, 32);
+  assert.match(plan!.heading, /Week of Mar 8–14, 2027/);
+  assert.equal(plan!.weekStart, "2027-03-08");
+  assert.equal(plan!.weekEnd, "2027-03-14");
+  assert.equal(plan!.prescribedMiles, 25);
   assert.equal(plan!.days.length, 3);
 });
 
 test("skips heading-only sections without day lines", () => {
   const plan = parseNewestWeekPlan(LOG)!;
-  assert.equal(plan.days[0].date, "2026-07-12");
-  assert.equal(plan.days[0].dayLabel, "Sun 7/12");
+  assert.equal(plan.days[0].date, "2027-03-07");
+  assert.equal(plan.days[0].dayLabel, "Sun 3/7");
 });
 
 test("strips markdown bold and keeps the prescription text", () => {
   const plan = parseNewestWeekPlan(LOG)!;
-  assert.equal(plan.days[0].text, "Rest from running + LOWER #2 (light) + circuit");
+  assert.equal(plan.days[0].text, "Rest from running + upper lift + circuit");
   assert.ok(!plan.days[2].text.includes("**"));
 });
 
 test("flags the 🎯 key day and resolves a date lookup", () => {
   const plan = parseNewestWeekPlan(LOG)!;
-  const lr = planForDate(plan, "2026-07-18");
+  const lr = planForDate(plan, "2027-03-13");
   assert.ok(lr);
   assert.equal(lr!.isKeyDay, true);
-  assert.equal(planForDate(plan, "2026-07-14"), undefined);
+  assert.equal(planForDate(plan, "2027-03-09"), undefined);
 });
 
 test("does not leak days from older sections", () => {
   const plan = parseNewestWeekPlan(LOG)!;
-  assert.ok(plan.days.every(d => d.date >= "2026-07-12"));
+  assert.ok(plan.days.every(d => d.date >= "2027-03-07"));
 });
 
 test("limits the public week to the dates in its heading", () => {
   const plan = parseNewestWeekPlan(LOG)!;
   assert.deepEqual(planWeekDays(plan).map((day) => day.date), [
-    "2026-07-13",
-    "2026-07-18",
+    "2027-03-08",
+    "2027-03-13",
   ]);
 });
 
