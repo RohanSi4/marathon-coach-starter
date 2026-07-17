@@ -1,94 +1,111 @@
-# AI Running Coach — starter kit
+# Marathon Coach Starter
 
-Turn an AI assistant into your personal running coach — one that reads your
-actual training data (every run, split by split, with heart rate), applies real
-sports science (Daniels' VDOT, Seiler intensity distribution, Banister training
-load), writes your weekly plans, and adapts them to how your body is actually
-responding.
+A privacy-first template that turns an AI assistant into a running coach with
+real training history, repeatable metrics, and a memory that improves each week.
 
-This is a template. Nobody's data is in it. Your coach learns *you* during an
-onboarding interview and gets smarter every week from your own numbers.
+[Use this template](https://github.com/RohanSi4/marathon-coach-starter/generate)
+· [See the live fitness dashboard](https://rohansingh04.com/fitness)
+· [Read the case study](https://rohansingh04.com/projects/marathon-prep-bot)
+
+This is the reusable machinery from my own marathon coaching system. It starts
+empty, interviews you about your goals and training history, then builds plans
+from your data. My workouts, locations, and health notes are not included.
 
 ## What you get
 
-- **A coach with a memory** — your profile, every plan, and every week's
-  adherence live in files the AI reads at the start of each session.
-- **A real data pipeline** (Apple Watch) — every workout lands as a FIT file;
-  the toolkit computes splits, HR zones, training load (TRIMP), aerobic
-  decoupling, stride detection, and long-term trends from the raw stream.
-- **Honest coaching logic** — easy days governed by heart rate and the talk
-  test, weekly mileage ramps gated by injury signals (GREEN/YELLOW/RED tiers),
-  step-back weeks, taper rules, in-run fueling plans.
-- **Receipts** — every prescription traces to an established training model, and
-  the system defers to your real race results over its own estimates.
+- A coach with memory through versioned athlete, plan, and adherence files
+- An Apple Watch pipeline that imports HealthFit FIT exports
+- Derived splits, heart-rate zones, TRIMP, aerobic decoupling, strides, and trends
+- Adaptive weekly planning with injury gates, step-back weeks, taper rules, and fueling
+- Coaching rules grounded in established models with clear limits and citations
+- A TypeScript toolkit with strict validation and automated regression coverage
 
-## Quick start (Claude Code — the full experience)
+## The flow
 
-1. **Get the repo:** click "Use this template" on GitHub (or fork/clone).
-2. **Install:** `npm install` (needs Node 20+).
-3. **Open the folder in [Claude Code](https://claude.com/claude-code)** and say:
-   > "You're my running coach. Onboard me."
+~~~text
+Apple Watch
+    ↓
+HealthFit FIT export
+    ↓
+TypeScript import and validation
+    ↓
+Training history + derived metrics
+    ↓
+AI coach reads the evidence
+    ↓
+Weekly plan + adherence log
+~~~
 
-   The AI reads `CLAUDE.md` (its operating manual), notices you have no profile
-   yet, and runs the onboarding interview — what you're training for, your goal,
-   your background, injuries, shoes, schedule. It writes your profile, configures
-   the repo, and hands you week 1.
-4. **Hook up your data** (Apple Watch users): follow `docs/SETUP-HEALTHFIT.md`
-   (~10 minutes, one time). After every workout, `npm run import` pulls it in.
-5. **Each week:** tell your coach "plan my week." It runs `npm run coach-data`,
-   reads your log, and writes the next week from the evidence.
+## Quick start with Claude Code
 
-Keep your copy of the repo private if you'd rather not share your training data —
-the data folder is part of the archive by design.
+Requirements: Node.js 20+.
 
-## Quick start (any chatbot — no code)
+1. Click [Use this template](https://github.com/RohanSi4/marathon-coach-starter/generate)
+   or clone the repository.
+2. Install dependencies:
 
-Don't want the data pipeline? `PROMPT.md` is a standalone system prompt: paste it
-into ChatGPT, Claude.ai, Gemini, or anything else with memory/custom instructions.
-You self-report your runs; the coach applies the same training logic. Less
-precise, still a real coach.
+   ~~~bash
+   npm install
+   ~~~
 
-## What's in the box
+3. Open the folder in [Claude Code](https://claude.com/claude-code) and say:
 
-| Path | What it is |
+   > You're my running coach. Onboard me.
+
+4. The coach reads `CLAUDE.md`, notices that no athlete profile exists, and
+   interviews you about your race, goals, background, injuries, shoes, and schedule.
+5. Apple Watch users can follow
+   [`docs/SETUP-HEALTHFIT.md`](docs/SETUP-HEALTHFIT.md) to connect workout exports.
+6. Ask the coach to plan your week. It will rebuild the coaching context, review
+   what happened, and write the next seven days.
+
+Keep your generated repository private if you import personal training data.
+
+## Use it with any chatbot
+
+No Apple Watch or coding assistant is required. `PROMPT.md` is a standalone
+version of the coaching system for ChatGPT, Claude, Gemini, or another assistant.
+You report workouts manually, so it is less precise, but the same planning and
+safety rules still apply.
+
+## What is in the repository
+
+| Path | Purpose |
 |---|---|
-| `CLAUDE.md` | The coach's operating manual (science, workflow, rules, output format) |
-| `ONBOARDING.md` | The first-session interview protocol |
-| `PROMPT.md` | Standalone version for any chatbot, no code needed |
-| `ATHLETE.md` | *Created at onboarding* — your profile, the coach's memory |
-| `COACHING-LOG.md` | Every week's plan + what actually happened |
-| `lib/`, `scripts/` | The data toolkit (TypeScript, 216 tests) |
-| `data/` | Your training archive (starts empty) |
-| `docs/SETUP-HEALTHFIT.md` | Apple Watch → FIT pipeline setup |
+| `CLAUDE.md` | Coaching rules, science, workflow, and required plan format |
+| `ONBOARDING.md` | First-session athlete interview |
+| `PROMPT.md` | Standalone prompt for chatbots without repository access |
+| `ATHLETE.md` | Athlete profile created during onboarding |
+| `COACHING-LOG.md` | Weekly plans and adherence history |
+| `lib/` and `scripts/` | TypeScript workout analysis and coaching tools |
+| `data/` | Private training archive, empty in the template |
+| `docs/SETUP-HEALTHFIT.md` | Apple Watch and HealthFit setup |
 
 ## Useful commands
 
-```
-npm run import          # ingest new workouts from HealthFit
-npm run coach-data      # the full weekly coaching context
-npm run plan-today      # what's on the plan today
-npm run last-run        # latest run: splits, HR analysis, stride check
-npm run trends          # the long-term arc
-npm run zones           # re-derive YOUR HR zones from YOUR runs
-npm test                # the test suite
-```
+| Command | What it does |
+|---|---|
+| `npm run import` | Import new HealthFit FIT exports |
+| `npm run coach-data` | Build the full weekly coaching context |
+| `npm run plan-today` | Show today's prescribed session |
+| `npm run last-run` | Analyze the latest run, splits, heart rate, and strides |
+| `npm run trends` | Show the long-term training arc |
+| `npm run zones` | Recalculate heart-rate zones from the athlete's own runs |
+| `npm run typecheck` | Run strict TypeScript checks |
+| `npm test` | Run the regression suite |
 
-## Requirements
+## Coaching principles
 
-- Node 20+
-- For the full pipeline: an Apple Watch + [HealthFit](https://apps.apple.com/app/healthfit/id1202650514)
-  (~$5, one-time) + iCloud Drive on a Mac
-- An AI assistant that can read files and run commands (Claude Code is the
-  reference experience)
+The system uses Daniels VDOT, Banister TRIMP and fitness-fatigue, Seiler
+intensity distribution, Lydiard-style periodization, and athlete-specific heart
+rate trends. It treats those models as tools, not truth.
 
-## A note on trust
+Real race results beat model estimates. Pain and injury signals stop progression.
+The coach states uncertainty and does not pretend population research can predict
+one athlete perfectly. This is training support, not medical advice.
 
-This system is built to be *trustworthy, not trusted blindly*: it cites its
-models, states its limits (n=1, estimated max HR, population regressions), and
-defers to real race results over its own estimates. It is not medical advice —
-pain means see a professional, and the coach is instructed to say exactly that.
+## Privacy
 
----
-
-*Extracted from a real coaching system that trained a real marathoner. The
-athlete's data stayed home; the machinery is all here.*
+FIT files can contain timestamps, heart-rate streams, and location data. The
+template intentionally keeps the pipeline local and starts with an empty archive.
+Treat access to a populated copy as access to sensitive health information.
