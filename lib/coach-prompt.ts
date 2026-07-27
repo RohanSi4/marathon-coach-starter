@@ -251,7 +251,8 @@ function detectInjuryFlags(activities: ActivitySummary[]): string[] {
 
 // ─── Hidden hard cross-training (basketball etc.) ─────────────────────────────
 // Basketball logs as a generic "Workout" but is a HARD session (HR 165-190, cutting/
-// jumping on fatigued legs — his biggest non-running injury risk, right knee side).
+// jumping on fatigued legs — typically the biggest non-running injury risk a runner
+// carries). 
 // Detect any non-run, non-lift activity that was cardio-hard so it's named in the
 // READINESS block instead of hiding as an innocuous "X" in the history table.
 const LIFT_TYPES = ["WeightTraining", "Crossfit", "Strength"];
@@ -443,7 +444,7 @@ export function buildCoachingUserMessage(
   annotateContinuations(activities); // split recordings (bathroom/water stop) → flagged as one session
   const runs = activities.filter((a) => a.type.toLowerCase().includes("run"));
   const runMiles = runs.reduce((sum, a) => sum + a.distanceMiles, 0);
-  // Indoor/outdoor mix (standing rule, Jul 7 2026): the athlete drifts toward
+  // Indoor/outdoor mix (standing rule): athletes drift toward
   // all-treadmill weeks. Aerobically fine, but it skips hills (most race courses'
   // half), heat adaptation, and road-surface tissue loading — surface the ratio
   // so the coach prescribes outdoor when the mix tips, LONG RUN OUTDOORS default.
@@ -579,7 +580,7 @@ ${acwrLine}`;
   const painThisWeek = injuryFlags.length > 0;
   const hardCross = activities.filter(isHardCrossTraining);
   const hardCrossLine = hardCross.length > 0
-    ? `\n  ⚠ HIDDEN HARD CROSS-TRAINING (${hardCross.length}): ${hardCross.map(a => `${a.type} ${a.dayOfWeek} (HR ${a.avgHR ?? "?"}avg/${a.maxHR ?? "?"}max)`).join("; ")} — each counts as a HARD day (likely basketball: cutting/jumping, right-knee risk). True load is HIGHER than mileage shows; never day-of/day-before the long run; it REPLACES a hard slot.`
+    ? `\n  ⚠ HIDDEN HARD CROSS-TRAINING (${hardCross.length}): ${hardCross.map(a => `${a.type} ${a.dayOfWeek} (HR ${a.avgHR ?? "?"}avg/${a.maxHR ?? "?"}max)`).join("; ")} — each counts as a HARD day (likely basketball or similar: cutting/jumping on fatigued legs). True load is HIGHER than mileage shows; never day-of/day-before the long run; it REPLACES a hard slot.`
     : "";
   const recentHR = (athleteProfile?.weeks ?? []).slice(-5).map(w => w.avgRunHR).filter((h): h is number => !!h);
   const hrTrend = recentHR.length >= 2 ? recentHR.join("→") + "bpm" : "n/a";
@@ -646,7 +647,7 @@ ${loadBlock}
 
 ${readinessBlock}
 
-THIS WEEK'S ACTIVITIES (Apple Watch Ultra 2 + Polar H10, via Apple Health/HealthFit):
+THIS WEEK'S ACTIVITIES (Apple Watch, via Apple Health/HealthFit):
 ${activitiesBlock}
 
 WEEKLY SUMMARY: ${runMiles.toFixed(1)} miles run | longest ${longRunMiles > 0 ? longRunMiles.toFixed(1) + "mi" : "none"} | lifts: ${liftDays.join(", ") || "none"}${avgRunHR ? ` | avg run HR ${avgRunHR}bpm` : ""}${thisWeekSuffer > 0 ? ` | total TRIMP ${thisWeekSuffer}` : ""}${indoorLine}

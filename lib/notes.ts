@@ -5,8 +5,8 @@
 // coach-TZ calendar date at summarize time.
 //
 // Format (either bullet or bare):
-//   2026-07-03: knee fine, took a gel at mile 5. shoes: speed3 rpe: 6
-//   - 2026-07-04: right ankle a little tight after
+//   2027-01-15: knee fine, took a gel at mile 5. shoes: speed3 rpe: 6
+//   - 2027-01-16: right ankle a little tight after
 //
 // Optional structured tokens parsed out of the text:
 //   shoes: <name>   — overrides the config date-map shoe for that day

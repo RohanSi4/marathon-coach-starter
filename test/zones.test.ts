@@ -6,6 +6,7 @@ import {
   bestSustained,
   maxHrObservations,
   STEADY_MAX_OVER_AVG,
+  H10_SINCE,
 } from "../lib/zones";
 import type { StoredActivity } from "../lib/types";
 
@@ -29,11 +30,11 @@ const run = (over: Partial<StoredActivity>): StoredActivity =>
 
 test("decouplingObservations: excludes short runs, flags surge runs as not steady", () => {
   const acts = [
-    run({ start_date: "2026-07-01T12:00:00.000Z", average_heartrate: 140, max_heartrate: 148, decouplingPct: 3.5 }),
+    run({ start_date: "2027-03-01T12:00:00.000Z", average_heartrate: 140, max_heartrate: 148, decouplingPct: 3.5 }),
     // interval run: max towers over avg by more than STEADY_MAX_OVER_AVG
-    run({ start_date: "2026-07-02T12:00:00.000Z", average_heartrate: 142, max_heartrate: 142 + STEADY_MAX_OVER_AVG + 5, decouplingPct: 8.9 }),
+    run({ start_date: "2027-03-02T12:00:00.000Z", average_heartrate: 142, max_heartrate: 142 + STEADY_MAX_OVER_AVG + 5, decouplingPct: 8.9 }),
     // too short (<40min)
-    run({ start_date: "2026-07-03T12:00:00.000Z", average_heartrate: 150, max_heartrate: 155, decouplingPct: 2.0, moving_time: 1200 }),
+    run({ start_date: "2027-03-03T12:00:00.000Z", average_heartrate: 150, max_heartrate: 155, decouplingPct: 2.0, moving_time: 1200 }),
   ];
   const obs = decouplingObservations(acts);
   assert.strictEqual(obs.length, 2);
@@ -43,9 +44,9 @@ test("decouplingObservations: excludes short runs, flags surge runs as not stead
 
 test("estimateLt1: brackets LT1 between highest coupled and lowest decoupled steady run", () => {
   const acts = [
-    run({ start_date: "2026-06-20T12:00:00.000Z", average_heartrate: 140, max_heartrate: 150, decouplingPct: 4.0 }),
-    run({ start_date: "2026-06-22T12:00:00.000Z", average_heartrate: 148, max_heartrate: 158, decouplingPct: 4.8 }),
-    run({ start_date: "2026-06-25T12:00:00.000Z", average_heartrate: 156, max_heartrate: 166, decouplingPct: 10.5 }),
+    run({ start_date: "2027-03-02T12:00:00.000Z", average_heartrate: 140, max_heartrate: 150, decouplingPct: 4.0 }),
+    run({ start_date: "2027-03-04T12:00:00.000Z", average_heartrate: 148, max_heartrate: 158, decouplingPct: 4.8 }),
+    run({ start_date: "2027-03-06T12:00:00.000Z", average_heartrate: 156, max_heartrate: 166, decouplingPct: 10.5 }),
   ];
   const est = estimateLt1(decouplingObservations(acts));
   assert.strictEqual(est.highestCoupled!.avgHR, 148);
@@ -55,9 +56,9 @@ test("estimateLt1: brackets LT1 between highest coupled and lowest decoupled ste
 
 test("estimateLt1: surge-poisoned decoupled run does NOT set the upper bracket", () => {
   const acts = [
-    run({ start_date: "2026-06-20T12:00:00.000Z", average_heartrate: 140, max_heartrate: 148, decouplingPct: 4.0 }),
+    run({ start_date: "2027-03-02T12:00:00.000Z", average_heartrate: 140, max_heartrate: 148, decouplingPct: 4.0 }),
     // decoupled but NOT steady (strides artifact) — must be ignored
-    run({ start_date: "2026-06-25T12:00:00.000Z", average_heartrate: 152, max_heartrate: 189, decouplingPct: 10.6 }),
+    run({ start_date: "2027-03-06T12:00:00.000Z", average_heartrate: 150, max_heartrate: 188, decouplingPct: 11.0 }),
   ];
   const est = estimateLt1(decouplingObservations(acts));
   assert.strictEqual(est.lt1, null);
@@ -68,7 +69,7 @@ test("estimateLt1: surge-poisoned decoupled run does NOT set the upper bracket",
 test("bestSustained: time-weights consecutive splits and picks the hottest window", () => {
   const acts = [
     run({
-      start_date: "2026-04-26T12:00:00.000Z",
+      start_date: "2027-03-13T12:00:00.000Z",
       splits: [
         { mile: 1, pace: "9:00/mi", avgHR: 150 },
         { mile: 2, pace: "9:00/mi", avgHR: 170 },
@@ -88,14 +89,18 @@ test("bestSustained: returns null when no run is long enough", () => {
   assert.strictEqual(bestSustained(acts, 2), null);
 });
 
-test("maxHrObservations: sorts descending and flags H10 era", () => {
+test("maxHrObservations: sorts descending and flags the chest-strap era", () => {
+  // Derive the dates from H10_SINCE so the fixture stays correct whatever the
+  // athlete sets it to during onboarding.
+  const before = "2000-01-01T12:00:00.000Z";
+  const after = `${H10_SINCE}T12:00:00.000Z`;
   const acts = [
-    run({ start_date: "2023-09-01T12:00:00.000Z", max_heartrate: 199 }),
-    run({ start_date: "2026-06-25T12:00:00.000Z", max_heartrate: 189 }),
+    run({ start_date: before, max_heartrate: 195 }),
+    run({ start_date: after, max_heartrate: 185 }),
   ];
   const obs = maxHrObservations(acts);
-  assert.strictEqual(obs[0].maxHR, 199);
+  assert.strictEqual(obs[0].maxHR, 195);
   assert.strictEqual(obs[0].h10Era, false);
-  assert.strictEqual(obs[1].maxHR, 189);
+  assert.strictEqual(obs[1].maxHR, 185);
   assert.strictEqual(obs[1].h10Era, true);
 });

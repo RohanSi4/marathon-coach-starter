@@ -1,9 +1,9 @@
-# Run notes — the athlete's free-text channel
+# Run notes: the athlete's free-text channel
 
 FIT files carry no text, so daily notes live here: one line per day, joined to
 that day's activities and scanned for injury/illness/fueling keywords.
 
-Format: `YYYY-MM-DD: how it felt, anything notable` — plus optional tokens
+Format: `YYYY-MM-DD: how it felt, anything notable`, plus optional tokens
 `shoes: <name>` and `rpe: N`. Lines the coach writes on the athlete's behalf must
 include `(coach-logged)` so they don't trip the athlete symptom scanner.
 

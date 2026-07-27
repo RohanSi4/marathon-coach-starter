@@ -8,7 +8,7 @@ import { fillMissingWeeks, weekKey, weekKeyUTCms } from "./weeks";
 export const BASELINE_PROFILE_PATH = path.join(
   process.cwd(),
   "data",
-  "athlete-profile.strava-baseline-2026-06-29.json"
+  "athlete-profile.baseline.json"
 );
 
 export interface ProfileBuildResult {

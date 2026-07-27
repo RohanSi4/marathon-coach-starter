@@ -1,6 +1,6 @@
 // isHardCrossTraining flags basketball-style hidden hard sessions (logged as generic
 // "Workout") so the READINESS block names them instead of letting a hard day hide as
-// an innocuous "X" — the exact failure mode of Jun 28 (2 pickup games on long-run legs).
+// an innocuous "X" — the classic failure mode of pickup games stacked on long-run legs.
 import test from "node:test";
 import assert from "node:assert/strict";
 import { isHardCrossTraining } from "../lib/coach-prompt";
@@ -29,6 +29,6 @@ test("no HR data → not flagged (nothing to judge by)", () => {
   assert.equal(isHardCrossTraining({ type: "Workout" }), false);
 });
 
-test("Basketball sport type is hard even with no strap/HR data (audit fix, Jul 2026)", () => {
+test("Basketball sport type is hard even with no strap/HR data", () => {
   assert.equal(isHardCrossTraining({ type: "Basketball" }), true);
 });

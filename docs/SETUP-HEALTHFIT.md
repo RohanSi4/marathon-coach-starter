@@ -1,6 +1,6 @@
 # Setup: Apple Watch → FIT pipeline (one time, ~10 minutes)
 
-The coach reads your workouts as FIT files — the raw per-second data (HR, pace,
+The coach reads your workouts as FIT files, the raw per-second data (HR, pace,
 GPS, power) straight from the watch. [HealthFit](https://apps.apple.com/app/healthfit/id1202650514)
 (~$5 one-time, iOS) exports every Apple Health workout as a FIT file
 automatically. This is the whole pipeline:
@@ -13,12 +13,12 @@ Apple Watch → Apple Health → HealthFit (auto-export) → iCloud Drive → np
 
 1. **Buy/install HealthFit** on the iPhone paired with your watch.
 2. **Grant it Health access** when prompted (workouts + heart rate at minimum;
-   grant broadly — it can only read).
+   grant broadly, it can only read).
 3. **Turn on auto-export to iCloud Drive:** HealthFit → Settings (gear) →
    Auto Export → **iCloud Drive** → enable for Workouts, format **FIT**.
 4. **Export your history (recommended):** HealthFit → Workouts tab → select-all →
-   export to iCloud Drive. Your training history calibrates the coach's models —
-   even a year back is gold.
+   export to iCloud Drive. Your training history calibrates the coach's models,
+   and even a year back is gold.
 5. **On the Mac** where this repo lives, confirm the folder exists:
    `~/Library/Mobile Documents/iCloud~com~altifondo~HealthFit/Documents`
    (it appears in Finder as "HealthFit" under iCloud Drive after the first
@@ -29,7 +29,7 @@ Apple Watch → Apple Health → HealthFit (auto-export) → iCloud Drive → np
 
 ## Sync quirks worth knowing
 
-- **Exports are fire-and-forget** — you never lose a workout, but iOS defers
+- **Exports are fire-and-forget.** You never lose a workout, but iOS defers
   background uploads. Opening HealthFit in the foreground for ~15-30s after a
   workout reliably pushes the file up. Low Power Mode postpones uploads.
 - **Mac-side lag:** viewing the HealthFit folder in Finder nudges iCloud to
@@ -45,7 +45,7 @@ baseline, resting-HR trend, sleep) comes alive. High value, five minutes.
 
 ## No Apple Watch?
 
-- **Garmin:** Garmin Connect can export FIT files — drop them in a folder and
+- **Garmin:** Garmin Connect can export FIT files. Drop them in a folder and
   point `HEALTHFIT_DIR` at it. The importer speaks standard FIT.
 - **No watch at all:** the coach still works from self-reported runs logged in
-  `data/notes.md` — or skip the repo entirely and use `PROMPT.md` in any chatbot.
+  `data/notes.md`, or skip the repo entirely and use `PROMPT.md` in any chatbot.

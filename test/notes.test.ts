@@ -19,8 +19,8 @@ test("parses bare and bulleted date lines, ignores everything else", () => {
 });
 
 test("extracts shoes: and rpe: tokens while keeping full text for keyword scanning", () => {
-  const [n] = parseNotes("2026-09-01: tempo felt strong. shoes: Endorphin Speed 3 rpe: 7");
-  assert.equal(n.shoes, "Endorphin Speed 3");
+  const [n] = parseNotes("2027-02-01: tempo felt strong. shoes: Tempo Trainer 2 rpe: 7");
+  assert.equal(n.shoes, "Tempo Trainer 2");
   assert.equal(n.rpe, 7);
   assert.match(n.text, /tempo felt strong/);
   assert.match(n.text, /shoes:/); // tokens stay in text — keyword scan sees everything

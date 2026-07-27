@@ -2,9 +2,9 @@
 // Durability — the magnitude/onset of physiological drift over a prolonged run —
 // is now argued to be a fourth determinant of endurance performance alongside
 // VO₂max, threshold, and economy (Maunder & Seiler 2021, Sports Medicine;
-// recreational-runner confirmation Kuang 2025). It's precisely THIS athlete's gap:
-// his fresh engine predicts ~3:07, but the engine fades over 26 miles and his is
-// untested. This module measures the fade.
+// recreational-runner confirmation Kuang 2025). It is the usual gap for a runner
+// whose fresh engine predicts a fast marathon but whose ability to hold that engine
+// over 26 miles is untested. This module measures the fade.
 //
 // We extend the whole-run Pa:HR decoupling (lib/fit/compute.ts) to THIRDS, computed
 // from the stored per-mile splits (no raw stream needed — splits carry per-mile HR
@@ -12,7 +12,7 @@
 // LAST third to the FIRST third: positive = faded (durability limit), negative =
 // negative-split (strong). When 90-min+ runs hold late decoupling <5%, the aerobic
 // base is genuinely built — a far stronger readiness signal than mileage alone, and
-// the objective evidence for the Sep 21 goal decision.
+// the objective evidence behind any goal-time decision.
 //
 // SIGN + EF conventions match computeDecoupling() exactly so the two read the same.
 import type { StoredActivity, MileSplit } from "./types";
@@ -138,7 +138,7 @@ export function formatDurabilityBlock(activities: StoredActivity[], recent = 8):
           const prevSign = prev.decouplingPct >= 0 ? "+" : "";
           return `  READ: latest ${last.miles}mi held ${sign}${last.decouplingPct}% over its last third ` +
             `(${dir} ${prevSign}${prev.decouplingPct}% prior). ` +
-            "When 90-min+ runs stay <5%, the aerobic base is genuinely built (the Sep 21 goal-decision evidence).";
+            "When 90-min+ runs stay <5%, the aerobic base is genuinely built (the goal-decision evidence).";
         })()
       : "  READ: one data point so far — trend it as the long run grows.";
   return (

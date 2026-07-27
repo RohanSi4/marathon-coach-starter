@@ -78,7 +78,7 @@ async function main() {
   console.log(`  MARATHON COACH — data dump · ${now.toDateString()}`);
   console.log(`  Weeks to race: ${getWeeksToRace()}`);
   console.log(`  Phase: ${getCurrentPhase()}`);
-  console.log(`  Coaching TZ: ${coachTZ(now)} (auto-switches to America/New_York on Aug 29)`);
+  console.log(`  Coaching TZ: ${coachTZ(now)}`);
   console.log(`  Data source: ${dataSource() === "fit" ? "local FIT store (Apple Health via HealthFit)" : "Strava API (legacy fallback)"}`);
   console.log("════════════════════════════════════════════════════════════════");
   console.log("  → Before writing the plan, read COACHING-LOG.md for last week's");

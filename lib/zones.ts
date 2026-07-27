@@ -17,9 +17,10 @@
 // over their avg are excluded from LT1 evidence (STEADY_MAX_OVER_AVG).
 import type { StoredActivity } from "./types";
 
-// H10 chest strap in use since Jun 22 2026 (athlete note that day). Earlier HR is
-// wrist-optical: fine for steady averages, distrust single-reading max spikes.
-export const H10_SINCE = "2026-06-22";
+// Date the athlete started wearing a chest-strap HR monitor. EDIT ME: set this to
+// the first day of strap data (leave it in the future if there is none). Earlier HR
+// is wrist-optical: fine for steady averages, distrust single-reading max spikes.
+export const H10_SINCE = "2999-01-01";
 
 // A run counts as STEADY (usable for LT1 decoupling evidence) when its max HR
 // doesn't tower over its average — surges/strides/intervals show 30+ bpm gaps.
