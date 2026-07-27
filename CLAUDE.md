@@ -62,7 +62,8 @@ defers to them.
 
 **DATA SOURCE: the local FIT store.** HealthFit (iOS) auto-exports every Apple
 Watch workout as a FIT file to iCloud Drive; `npm run import` ingests them into
-`data/activities/` (committed to git, it IS the training archive). See
+`data/activities/` (gitignored by default, since FIT data carries GPS and
+timestamps; see `data/README.md` if you want it versioned in a private repo). See
 `docs/SETUP-HEALTHFIT.md` for the one-time pipeline setup.
 
 1. **Ingest new workouts:** `npm run import` scans the HealthFit folder,

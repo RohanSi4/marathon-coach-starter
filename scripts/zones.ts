@@ -27,7 +27,10 @@ console.log(`  Config: MAX_HR ${MAX_HR} (estimated) → Z1<${zoneBpm[0]} Z2 ${zo
 console.log("════════════════════════════════════════════════════════════\n");
 
 // 1) Max HR credibility
-console.log(`MAX HR — top observations (H10 chest strap since ${H10_SINCE}; earlier = wrist-optical, distrust lone spikes):`);
+const strapNote = H10_SINCE > new Date().toISOString().slice(0, 10)
+  ? "no chest strap configured (set H10_SINCE in lib/zones.ts); wrist-optical throughout, distrust lone spikes"
+  : `chest strap since ${H10_SINCE}; earlier = wrist-optical, distrust lone spikes`;
+console.log(`MAX HR — top observations (${strapNote}):`);
 for (const o of maxHrObservations(all)) {
   console.log(`  ${o.maxHR} bpm  ${o.date}  ${o.type}${o.h10Era ? "  [H10 ✓]" : ""}`);
 }

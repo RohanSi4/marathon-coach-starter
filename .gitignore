@@ -13,6 +13,19 @@ out/
 # data & logs (auto-generated)
 logs/
 
+# The training archive. `npm run import` fills these from whatever FIT files are
+# already on this machine, and a FIT file carries GPS start coordinates, exact
+# timestamps, heart-rate streams, and the device name (often the owner's name).
+# They are ignored by default so a template-generated repo cannot publish health
+# data by accident. If your repo is private and you WANT the archive versioned,
+# delete the four lines below.
+data/activities/*.json
+data/athlete-profile*.json
+data/recovery.csv
+data/*.xlsx
+# Keyed by "lat,lng,timestamp", so it is a location record on its own.
+data/weather-cache.json
+
 # misc
 .DS_Store
 *.pem

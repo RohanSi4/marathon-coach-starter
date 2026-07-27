@@ -75,7 +75,7 @@ safety rules still apply.
 | `CLAUDE.md` | Coaching rules, science, workflow, and required plan format |
 | `ONBOARDING.md` | First-session athlete interview |
 | `PROMPT.md` | Standalone prompt for chatbots without repository access |
-| `ATHLETE.md` | Athlete profile created during onboarding |
+| `ATHLETE.md` | Your profile. Does not exist yet; the coach writes it during onboarding |
 | `COACHING-LOG.md` | Weekly plans and adherence history |
 | `lib/` and `scripts/` | TypeScript workout analysis and coaching tools |
 | `data/` | Private training archive, empty in the template |

@@ -17,7 +17,7 @@ test("raceVDOT: 1:59 half marathon ≈ VDOT 37", () => {
   assert.ok(v >= 36 && v <= 38, `expected ~37, got ${v}`);
 });
 
-test("raceVDOT: 3:45 marathon ≈ VDOT 41 (== the goal)", () => {
+test("raceVDOT: 3:45 marathon ≈ VDOT 41", () => {
   const v = Math.round(raceVDOT(42195, 3 * 3600 + 45 * 60));
   assert.equal(v, 41);
 });
