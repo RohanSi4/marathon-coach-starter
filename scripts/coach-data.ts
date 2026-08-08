@@ -8,6 +8,8 @@ import { getWeekSummaries, dataSource } from "../lib/source";
 import { newestActivityAgeDays, loadActivities } from "../lib/store";
 import { formatDurabilityBlock } from "../lib/durability";
 import { formatLoadBlock } from "../lib/load";
+import { formatIntensityBlock, formatSpecificityBlock } from "../lib/intensity";
+import { formatTerrainBlock } from "../lib/terrain";
 import { formatHrvBand } from "../lib/hrv-band";
 import { loadRecovery } from "../lib/recovery";
 import { formatRaceBlock } from "../lib/race-predict";
@@ -139,6 +141,9 @@ async function main() {
     const all = allActivities ?? loadActivities();
     console.log("\n" + formatDurabilityBlock(all));
     console.log("\n" + formatLoadBlock(all));
+    console.log("\n" + formatIntensityBlock(all));
+    console.log("\n" + formatSpecificityBlock(all));
+    console.log("\n" + formatTerrainBlock(all));
     console.log("\n" + formatHrvBand(loadRecovery()));
     const ri = raceInput(profile, all, now);
     if (ri) console.log("\n" + formatRaceBlock(ri));

@@ -42,6 +42,8 @@ blindly.
 - **Polarized / 80-20 intensity**: Seiler. Easy days truly easy so hard days can be
   hard. For low-volume runners (<40 mpw) use a pyramidal ~75-80% easy / 15-20%
   threshold / <5% hard split; volume and consistency matter more than the exact ratio.
+  **Measured, not assumed** — `coach-data` prints the real time-in-zone split from
+  stored HR zones (runs only; a basketball game's Z4 must not enter a running ratio).
 - **Aerobic base periodization**: Lydiard/Daniels: base → threshold →
   race-specific → taper. Speed work is *earned* in later phases.
 - **Connective-tissue adaptation lag**: tendons/ligaments/bone adapt slower than
@@ -253,3 +255,11 @@ log, never against a remembered chat message.
   athlete ever reports the console numbers directly, that is a free calibration
   test — record it.
 - Stopped minutes > 3 on a long run → possible fueling/GI issue; ask.
+- **GOAL-PACE SPECIFICITY block:** miles run inside the goal band, counted in
+  SPLITS not sessions. This is the number that can sit near zero while mileage,
+  ACWR, and durability all look healthy. Race pace has to become a rehearsed feel.
+- **HILL EXPOSURE block:** feet of climb per mile, which is comparable across run
+  lengths in a way total gain is not — a flat 14-miler out-climbs a hilly 3-miler on
+  total feet while being the less specific run. Treadmill miles contribute a
+  structural ZERO, incline or not, since belt grade is not stored. Set the
+  thresholds in `lib/terrain.ts` from the goal race's real profile at onboarding.
