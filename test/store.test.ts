@@ -106,6 +106,23 @@ test("same-key poorer re-export cannot erase richer stored data", () => {
   assert.deepEqual(stored?.start_latlng, [37.77, -122.42]);
 });
 
+test("stride blips are not erased by a stream-less re-import", () => {
+  const start = "2026-07-06T13:00:00.000Z";
+  const rich: StoredActivity = {
+    ...act(start),
+    strideBlips: [{ atSec: 900, peakHR: 178, baseHR: 150, durationSec: 22 }],
+  };
+  saveActivity(rich, dir);
+
+  // Same key, same summary fields, but re-derived without the record stream.
+  const result = saveActivity(act(start), dir);
+  assert.equal(result.retainedExisting, true);
+  assert.equal(result.activity.strideBlips?.length, 1);
+
+  const stored = loadActivities(undefined, dir).find(a => a.key === rich.key);
+  assert.equal(stored?.strideBlips?.length, 1);
+});
+
 test("equal-richness edits still overwrite values", () => {
   const start = "2026-07-05T13:00:00.000Z";
   const original = { ...act(start), average_heartrate: 150 };

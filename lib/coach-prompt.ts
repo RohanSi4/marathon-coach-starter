@@ -5,6 +5,7 @@ import { weekKey, zonedDayOfWeek, weekKeyUTCms, nextWeekKey } from "./weeks";
 import { loadRecovery, recoveryReadiness, recoveryDetail, vo2maxTrend } from "./recovery";
 import { describeStrideBlips } from "./fit/compute";
 import { annotateContinuations } from "./summarize";
+import { LIFT_TYPES } from "./aggregate";
 
 const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
@@ -255,7 +256,6 @@ function detectInjuryFlags(activities: ActivitySummary[]): string[] {
 // carries). 
 // Detect any non-run, non-lift activity that was cardio-hard so it's named in the
 // READINESS block instead of hiding as an innocuous "X" in the history table.
-const LIFT_TYPES = ["WeightTraining", "Crossfit", "Strength"];
 const HARD_XT_AVG_HR = 145;
 const HARD_XT_MAX_HR = 175;
 
@@ -283,7 +283,7 @@ export function isQualityRun(a: ActivitySummary): boolean {
 
 // ─── Training load (CTL/ATL/TSB approximation from suffer scores) ─────────────
 
-function computeTrainingLoad(profile: AthleteProfile | null, thisWeekSuffer: number, currentWeekKey?: string): {
+export function computeTrainingLoad(profile: AthleteProfile | null, thisWeekSuffer: number, currentWeekKey?: string): {
   ctlWeeks: number;
   zeroWeeks: number;
   ctl: number;
@@ -308,6 +308,14 @@ function computeTrainingLoad(profile: AthleteProfile | null, thisWeekSuffer: num
   const tsb = ctl - atl;
   let status: string;
   if (withLoad.length === 0) status = "NO TRIMP BASELINE YET (zero weeks with load data — TSB is meaningless; judge by mileage, symptoms, and HR trends)";
+  // CTL is a WHOLE-week average; ATL, while `currentWeekKey` is set, is the current
+  // week's PARTIAL running total. Subtracting them compares a full week against an
+  // unfinished one, so TSB ran hugely positive early in every week and the line read
+  // "FRESH (consider adding volume/intensity)" on a Monday by construction. Pro-rating
+  // would only trade that for a load-distribution model this repo does not have (a
+  // long run late in the week means load is not uniform). Report the raw comparison
+  // and let the daily-EWMA PMC in lib/load.ts own the form verdict.
+  else if (currentWeekKey) status = `WEEK STILL IN PROGRESS — ${atl} of a typical ${ctl} TRIMP logged so far. This TSB compares a partial week against a full-week average, so it is NOT a form read; use the PMC (daily-EWMA) line for that.`;
   else if (tsb > 15) status = "FRESH (consider adding volume/intensity)";
   else if (tsb > -10) status = "NEUTRAL";
   else if (tsb > -25) status = "MODERATELY FATIGUED (normal training load)";
@@ -570,8 +578,13 @@ Modified: ${adherence.modified.join(", ") || "none"}\n`;
   const acwrLine = acwr.ratio != null
     ? `  ACWR (workload-change heuristic): ${acwr.ratio} — acute ${acwr.acute}mi this week vs chronic ${acwr.chronic}mi/wk (4-wk avg). ${acwr.status}`
     : `  ACWR (workload-change heuristic): ${acwr.status} (this week ${acwr.acute}mi)`;
-  const loadBlock = `TRAINING LOAD (TRIMP — Banister; scale ballpark-comparable to the old suffer score, thresholds provisional):
-  CTL (${load.ctlWeeks}wk-with-data avg TRIMP): ${load.ctl} | ATL (this week): ${load.atl} | TSB: ${load.tsb > 0 ? "+" : ""}${load.tsb}
+  // Suppress the TSB figure entirely while the week is unfinished — a number
+  // printed beside the word TSB gets read as form no matter what the status says.
+  const tsbCell = currentWeekKey
+    ? "TSB: n/a until the week closes"
+    : `TSB: ${load.tsb > 0 ? "+" : ""}${load.tsb}`;
+  const loadBlock = `TRAINING LOAD (weekly TRIMP totals; the form read lives in the PMC line further down):
+  CTL (${load.ctlWeeks}wk-with-data avg TRIMP): ${load.ctl} | ATL (this week so far): ${load.atl} | ${tsbCell}
   Status: ${load.status}${sufferDataGap}
 ${acwrLine}`;
 

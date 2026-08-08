@@ -109,6 +109,13 @@ export function activityRichness(a: StoredActivity): number {
   let score = validGps(a) ? 100 : 0;
   if (a.splits?.length) score += 2 + Math.min(a.splits.length, 20) / 20;
   if (a.hrZones?.length) score += 2;
+  // Per-second channels are only ever derivable from the raw FIT record stream, so
+  // a summary-shaped re-import of the same key cannot regenerate them. Left
+  // uncounted, richness tied and the poorer record won (the tie overwrites),
+  // silently dropping the stream-derived detail.
+  // Tested by PRESENCE, not length: a run whose stream WAS parsed but contained no
+  // strides stores an empty array, and that is still full coverage.
+  if (a.strideBlips != null) score += 2;
   const optional: Array<unknown> = [
     a.average_heartrate, a.max_heartrate, a.average_watts, a.weighted_average_watts,
     a.calories, a.average_cadence, a.average_temp, a.perceivedExertion, a.description,
