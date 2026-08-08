@@ -256,14 +256,18 @@ function detectInjuryFlags(activities: ActivitySummary[]): string[] {
 // carries). 
 // Detect any non-run, non-lift activity that was cardio-hard so it's named in the
 // READINESS block instead of hiding as an innocuous "X" in the history table.
+const CUTTING_SPORTS = ["Basketball", "Soccer", "Tennis"];
 const HARD_XT_AVG_HR = 145;
 const HARD_XT_MAX_HR = 175;
 
 export function isHardCrossTraining(a: Pick<ActivitySummary, "type" | "avgHR" | "maxHR">): boolean {
   if (a.type.toLowerCase().includes("run") || LIFT_TYPES.includes(a.type)) return false;
-  // FIT-era basketball carries its own sport type: hard by nature (cutting/jumping),
-  // so flag it even when the strap wasn't worn and there's no HR to judge by.
-  if (a.type === "Basketball") return true;
+  // Cutting sports are hard by MECHANISM, not by heart rate — flag them even when no
+  // strap was worn, and even when HR stays low. Racquet sports in particular often
+  // never reach the HR thresholds yet are 45-135min of lateral load on the knee chain.
+  // Keep this list in step with lib/fit/sport-map.ts: a sport that maps to its own
+  // type but is missing here is silently downgraded to an ordinary cross-training day.
+  if (CUTTING_SPORTS.includes(a.type)) return true;
   return (a.avgHR ?? 0) >= HARD_XT_AVG_HR || (a.maxHR ?? 0) >= HARD_XT_MAX_HR;
 }
 

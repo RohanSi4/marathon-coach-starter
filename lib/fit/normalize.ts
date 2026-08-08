@@ -115,7 +115,13 @@ export function normalizeFit(messages: FitMessages, sourceFile?: string, opts: N
     moving_time: Math.round(moving),
     elapsed_time: Math.round(elapsed),
     average_speed: avgSpeed,
-    max_speed: num(session.enhancedMaxSpeed) ?? num(session.maxSpeed) ?? 0,
+    // GymKit-paired treadmills report a corrupted speed stream (36+ mph peaks), so a
+    // max taken from it is meaningless. Drop implausible values rather than storing a
+    // number no human ran. 8 m/s is about 3:21/mi, well above any real training pace.
+    max_speed: (() => {
+      const v = num(session.enhancedMaxSpeed) ?? num(session.maxSpeed) ?? 0;
+      return v > 8 ? 0 : v;
+    })(),
     total_elevation_gain: num(session.totalAscent) ?? 0,
     average_heartrate: num(session.avgHeartRate),
     max_heartrate: num(session.maxHeartRate),

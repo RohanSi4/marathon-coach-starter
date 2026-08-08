@@ -31,6 +31,15 @@ export function mapSport(
       return { type: "Swim", trainer: false };
     case "basketball": case "6":
       return { type: "Basketball", trainer: false };
+    // Soccer and tennis are lateral cutting/decelerating sports — the same knee and
+    // ankle mechanism the basketball rule exists for. Without these cases they fall
+    // to the `default: Workout` catch-all and bypass the hard-day rule entirely,
+    // including matches that miss the HR thresholds by a bpm or two. Lateral sport
+    // does not have to reach running HR to load the joint.
+    case "soccer": case "7":
+      return { type: "Soccer", trainer: false };
+    case "tennis": case "8":
+      return { type: "Tennis", trainer: false };
     case "training": case "10":
       if (sub === "strengthTraining" || sub === "20") return { type: "WeightTraining", trainer: false };
       return { type: "Workout", trainer: false };

@@ -165,7 +165,33 @@ export function computeHRDriftFromSplits(splits: MileSplit[] | undefined): numbe
 // runs ≥40min of moving time with HR + speed streams — the marathon-relevant read.
 const DECOUPLING_MIN_MOVING_S = 40 * 60;
 
+// GymKit-paired treadmills write a CORRUPTED enhancedSpeed stream: mean values many
+// times the distance-derived truth, and decorrelated from real pace rather than
+// merely mis-scaled. The `distance` stream on the same files is fine. Anything that
+// trusts `speed` blindly (decoupling, max_speed) is then computing on garbage, so
+// callers must sanity-check the stream against distance before believing it.
+const SPEED_STREAM_MAX_DIVERGENCE = 1.25; // mean speed vs distance-derived mean
+
+// True when the record stream's speed field can be trusted against its own distance
+// channel. Returns false for corrupted treadmill speed, and (harmlessly) for any
+// file lacking enough of either channel to judge.
+export function speedStreamIsTrustworthy(records: RecordPoint[]): boolean {
+  const withSpeed = records.filter(r => typeof r.speed === "number" && r.speed! > 0);
+  if (withSpeed.length < 30) return false;
+  const first = records.find(r => r.dist != null);
+  const last = [...records].reverse().find(r => r.dist != null);
+  if (!first || !last) return false;
+  const seconds = (last.t - first.t) / 1000;
+  if (seconds <= 0) return false;
+  const derived = (last.dist! - first.dist!) / seconds;
+  if (derived <= 0) return false;
+  const claimed = withSpeed.reduce((s, r) => s + r.speed!, 0) / withSpeed.length;
+  const ratio = claimed / derived;
+  return ratio <= SPEED_STREAM_MAX_DIVERGENCE && ratio >= 1 / SPEED_STREAM_MAX_DIVERGENCE;
+}
+
 export function computeDecoupling(records: RecordPoint[]): number | undefined {
+  const trustSpeed = speedStreamIsTrustworthy(records);
   // Collect per-interval (movingDt, speed, hr) samples.
   const samples: { dt: number; speed: number; hr: number }[] = [];
   for (let i = 1; i < records.length; i++) {
@@ -174,8 +200,9 @@ export function computeDecoupling(records: RecordPoint[]): number | undefined {
     const dt = movingDt(prev.t, cur.t);
     if (dt <= 0) continue;
     const hr = cur.hr ?? prev.hr;
-    const speed = cur.speed ?? prev.speed
-      ?? (cur.dist != null && prev.dist != null ? (cur.dist - prev.dist) / dt : undefined);
+    const fromDistance = cur.dist != null && prev.dist != null ? (cur.dist - prev.dist) / dt : undefined;
+    // Distance FIRST when the speed stream can't be trusted (GymKit treadmills).
+    const speed = trustSpeed ? (cur.speed ?? prev.speed ?? fromDistance) : (fromDistance ?? undefined);
     if (hr == null || speed == null || speed <= 0) continue;
     samples.push({ dt, speed, hr });
   }

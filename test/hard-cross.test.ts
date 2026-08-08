@@ -32,3 +32,21 @@ test("no HR data → not flagged (nothing to judge by)", () => {
 test("Basketball sport type is hard even with no strap/HR data", () => {
   assert.equal(isHardCrossTraining({ type: "Basketball" }), true);
 });
+
+// Cutting sports are hard by MECHANISM. Racquet sports in particular sit well below
+// both HR thresholds while still loading the knee laterally for over an hour, so
+// judging them on heart rate alone silently files them as an ordinary easy day.
+test("tennis is hard by mechanism even at easy-run heart rates", () => {
+  assert.equal(isHardCrossTraining({ type: "Tennis", avgHR: 122, maxHR: 148 }), true);
+});
+
+test("soccer is hard even with no strap data at all", () => {
+  assert.equal(isHardCrossTraining({ type: "Soccer" }), true);
+});
+
+// Guards the coupling between lib/fit/sport-map.ts and CUTTING_SPORTS: sport-map
+// gives these their own activity types, and if this rule does not know the type,
+// the mapping silently downgrades a hard session instead of flagging it.
+test("a non-cutting sport at the same low HR is NOT flagged", () => {
+  assert.equal(isHardCrossTraining({ type: "Swim", avgHR: 122, maxHR: 148 }), false);
+});
