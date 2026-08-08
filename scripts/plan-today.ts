@@ -6,8 +6,8 @@ import path from "path";
 import { getWeeksToRace, getCurrentPhase } from "../lib/coach-prompt";
 import { RACE_NAME } from "../lib/config";
 import {
-  parseNewestWeekPlan,
-  planForDate,
+  parseWeekPlans,
+  plannedDayFor,
   planWeekDays,
   todayKey,
 } from "../lib/plan-today";
@@ -23,14 +23,19 @@ function main(): void {
     process.exit(1);
   }
 
-  const plan = parseNewestWeekPlan(content);
+  // Parse several weeks, not just the newest: once next week's plan is written the
+  // newest section no longer contains today, and looking only there leaves the rest
+  // of the CURRENT week with no prescription.
+  const plans = parseWeekPlans(content);
+  const plan = plans[0];
   if (!plan) {
     console.error("[plan-today] no week section with day lines found in COACHING-LOG.md.");
     process.exit(1);
   }
 
   const today = todayKey();
-  const todayPlan = planForDate(plan, today);
+  const todayPlan = plannedDayFor(plans, today);
+  // The week view still follows the NEWEST plan; only today's lookup spans weeks.
   const weekDays = planWeekDays(plan);
   const fullWeek = process.argv.includes("--week");
 

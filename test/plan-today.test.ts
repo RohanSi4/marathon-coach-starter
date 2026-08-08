@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { parseNewestWeekPlan, planForDate, planWeekDays } from "../lib/plan-today";
+import { parseNewestWeekPlan, parseWeekPlans, plannedDayFor, planForDate, planWeekDays } from "../lib/plan-today";
 
 const LOG = `# Coaching Log
 
@@ -68,4 +68,48 @@ test("limits the public week to the dates in its heading", () => {
 
 test("returns null when no section has day lines", () => {
   assert.equal(parseNewestWeekPlan("# empty\n\n## Week of Jan 1, 2026\nprose only\n"), null);
+});
+
+// The bug this guards: a coach writes NEXT week's plan before the current week
+// ends (correct practice). Parsing only the newest section then leaves every
+// remaining day of the CURRENT week with no prescription at all.
+const TWO_WEEK_LOG = `
+## Week of Mar 8–14, 2027 — Phase 2
+
+**Prescribed (~30mi)**
+
+- Mon 3/8: Easy 5mi
+- Tue 3/9 🎯: Threshold 6mi
+- Wed 3/10: Rest
+
+## Week of Mar 1–7, 2027 — Phase 2
+
+**Prescribed (~28mi)**
+
+- Fri 3/5: Easy 4mi
+- Sat 3/6 🎯: Long run 12mi
+- Sun 3/7: Rest
+`;
+
+test("parseWeekPlans returns several weeks, newest first", () => {
+  const plans = parseWeekPlans(TWO_WEEK_LOG);
+  assert.equal(plans.length, 2);
+  assert.match(plans[0].heading, /Mar 8/);
+  assert.match(plans[1].heading, /Mar 1/);
+});
+
+test("a day in the PREVIOUS week still resolves once next week is written", () => {
+  const plans = parseWeekPlans(TWO_WEEK_LOG);
+  // Sat 3/6 lives in the older section; the newest section starts 3/8.
+  const day = plannedDayFor(plans, "2027-03-06");
+  assert.equal(day?.text, "Long run 12mi");
+  assert.equal(day?.isKeyDay, true);
+  // And the newest week still resolves normally.
+  assert.equal(plannedDayFor(plans, "2027-03-09")?.text, "Threshold 6mi");
+});
+
+test("parseNewestWeekPlan still returns just the newest section", () => {
+  const plan = parseNewestWeekPlan(TWO_WEEK_LOG)!;
+  assert.match(plan.heading, /Mar 8/);
+  assert.equal(plan.days.length, 3);
 });

@@ -102,11 +102,21 @@ test("estimateCurrentVDOT counts a short-but-hard effort (≥2mi, ≥80% max)", 
   assert.notEqual(r, null, "3.1mi at 88% max is a valid VO2max signal");
 });
 
-test("estimateCurrentVDOT includes GymKit treadmill (tm) hard efforts", () => {
+test("estimateCurrentVDOT EXCLUDES treadmill (tm) hard efforts", () => {
+  // VDOT is pace-derived, and belt pace is not an independent measurement: the
+  // treadmill relays commanded speed and cannot see slip or calibration error.
+  // Including these inflates the engine estimate, which is the number the coach
+  // uses to judge whether the goal time is realistic.
   const p = profile([week(["★9.3mi@8:03/mi(tm)(HR163)"])]);
+  assert.equal(estimateCurrentVDOT(p), null, "(tm) run must not produce an estimate");
+});
+
+test("a quoted note containing (tm) does not disqualify an outdoor run", () => {
+  // The exclusion matches only the structural marker immediately after pace, so
+  // free text in a note cannot silently delete a real outdoor effort.
+  const p = profile([week(['★9.3mi@8:03/mi(HR163) "felt good (tm) vibes"'])]);
   const r = estimateCurrentVDOT(p);
-  assert.notEqual(r, null, "(tm) run with HR + distance should count");
-  assert.ok(r!.vdot >= 48 && r!.vdot <= 52);
+  assert.notEqual(r, null, "outdoor run with (tm) only inside a note should still count");
 });
 
 // ─── WRITE→READ coupling guard ────────────────────────────────────────────────
@@ -127,11 +137,13 @@ function stravaRun(over: Partial<StravaActivity>): StravaActivity {
 }
 
 test("compactRun → estimateCurrentVDOT roundtrips (guards the write/read format)", () => {
-  // A real 4mi hard treadmill effort: HR 165 (~85-87% of MAX_HR), 8:00/mi.
-  const a = stravaRun({ average_heartrate: 165, trainer: true, start_latlng: [] });
+  // A real 4mi hard OUTDOOR effort: HR 165 (~85-87% of MAX_HR), GPS-backed 8:00/mi.
+  // Outdoor on purpose — treadmill runs are excluded from VDOT entirely, so a belt
+  // fixture here would test the exclusion rather than the format coupling.
+  const a = stravaRun({ average_heartrate: 165, trainer: false, start_latlng: [37, -122] });
   const key = compactRun(a, null);
   // Sanity: the produced string has the shape the parser expects.
-  assert.match(key, /4\.0mi@8:00\/mi\(tm\)\(HR165\)/, `unexpected compactRun format: ${key}`);
+  assert.match(key, /4\.0mi@8:00\/mi\(HR165\)/, `unexpected compactRun format: ${key}`);
 
   const r = estimateCurrentVDOT(profile([week([key])]));
   assert.notEqual(r, null, `compactRun output "${key}" failed to parse in estimateCurrentVDOT`);
@@ -140,7 +152,13 @@ test("compactRun → estimateCurrentVDOT roundtrips (guards the write/read forma
 
 test("compactRun with a description note still parses (note can't shadow the fields)", () => {
   // A note containing digits/@ must not be picked up before the real pace/distance.
-  const a = stravaRun({ average_heartrate: 168, description: "felt 8/10 @ tempo, 2mi in" });
+  // Outdoor (GPS) so the treadmill exclusion doesn't mask what this is testing.
+  const a = stravaRun({
+    average_heartrate: 168,
+    trainer: false,
+    start_latlng: [37, -122],
+    description: "felt 8/10 @ tempo, 2mi in",
+  });
   const key = compactRun(a, a);
   const r = estimateCurrentVDOT(profile([week([key])]));
   assert.notEqual(r, null, `note-bearing compactRun output "${key}" failed to parse`);

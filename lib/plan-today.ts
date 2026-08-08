@@ -33,11 +33,17 @@ function stripMd(s: string): string {
   return s.replace(/\*\*/g, "").trim();
 }
 
-// Parse the FIRST (= newest; the log is newest-on-top) week section that
-// contains day-bullet lines. Sections without day lines (data corrections,
-// close-outs) are skipped.
-export function parseNewestWeekPlan(logContent: string): WeekPlan | null {
+// Parse the newest `max` week sections that contain day-bullet lines, newest
+// first. Sections without day lines (data corrections, close-outs) are skipped.
+//
+// More than one is needed because a coach routinely writes NEXT week's plan before
+// the current week has finished — which is correct practice, and which, when only
+// the single newest section was parsed, silently left the remaining days of the
+// CURRENT week with no prescription at all. See plannedDayFor.
+export function parseWeekPlans(logContent: string, max = 3): WeekPlan[] {
   const lines = logContent.split("\n");
+  const plans: WeekPlan[] = [];
+
   let heading: string | null = null;
   let year: number | null = null;
   let weekStart: string | undefined;
@@ -45,10 +51,24 @@ export function parseNewestWeekPlan(logContent: string): WeekPlan | null {
   let prescribedMiles: number | undefined;
   let days: PlanDay[] = [];
 
+  const flush = () => {
+    if (heading != null && days.length > 0) {
+      plans.push({ heading, weekStart, weekEnd, prescribedMiles, days });
+    }
+    heading = null;
+    year = null;
+    weekStart = undefined;
+    weekEnd = undefined;
+    prescribedMiles = undefined;
+    days = [];
+  };
+
   for (const line of lines) {
-    const section = line.match(SECTION_RE);
-    if (section) {
-      if (days.length > 0) break; // finished the newest section that had a plan
+    if (line.startsWith("## ")) {
+      flush();
+      if (plans.length >= max) return plans;
+      const section = line.match(SECTION_RE);
+      if (!section) continue; // a non-week heading: data correction, close-out
       heading = line.replace(/^##\s*/, "").trim();
       year = parseInt(section[1], 10);
       const range = line.match(RANGE_RE);
@@ -58,15 +78,9 @@ export function parseNewestWeekPlan(logContent: string): WeekPlan | null {
         const endMonth = MONTHS[endMonthLabel ?? startMonthLabel];
         weekStart = `${rangeYear}-${String(startMonth).padStart(2, "0")}-${String(startDay).padStart(2, "0")}`;
         weekEnd = `${rangeYear}-${String(endMonth).padStart(2, "0")}-${String(endDay).padStart(2, "0")}`;
-      } else {
-        weekStart = undefined;
-        weekEnd = undefined;
       }
-      prescribedMiles = undefined;
-      days = [];
       continue;
     }
-    if (line.startsWith("## ") && days.length > 0) break;
     if (year == null) continue;
     const prescribed = line.match(PRESCRIBED_RE);
     if (prescribed && prescribedMiles == null) prescribedMiles = Number(prescribed[1]);
@@ -82,9 +96,12 @@ export function parseNewestWeekPlan(logContent: string): WeekPlan | null {
       isKeyDay: marker.includes("🎯"),
     });
   }
+  flush();
+  return plans.slice(0, max);
+}
 
-  if (heading == null || days.length === 0) return null;
-  return { heading, weekStart, weekEnd, prescribedMiles, days };
+export function parseNewestWeekPlan(logContent: string): WeekPlan | null {
+  return parseWeekPlans(logContent, 1)[0] ?? null;
 }
 
 // Today's calendar date in the coaching timezone.
@@ -107,4 +124,20 @@ export function planWeekDays(plan: WeekPlan): PlanDay[] {
 
 export function planForDate(plan: WeekPlan, dateKey: string): PlanDay | undefined {
   return planWeekDays(plan).find(d => d.date === dateKey);
+}
+
+/**
+ * What was prescribed on a given date, searched across every parsed week.
+ *
+ * `planForDate` only looks inside ONE week section, which is right when you already
+ * know which week you mean, and wrong for answering "what was I supposed to do
+ * today" — once next week's plan is written, the newest section no longer contains
+ * today, and a single-section lookup returns nothing for the rest of the week.
+ */
+export function plannedDayFor(plans: WeekPlan[], dateKey: string): PlanDay | undefined {
+  for (const plan of plans) {
+    const day = planForDate(plan, dateKey);
+    if (day) return day;
+  }
+  return undefined;
 }

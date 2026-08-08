@@ -48,8 +48,11 @@ function fmtDate(d: Date): string {
 // Daniels model lives in lib/vdot.ts. Estimates CURRENT VO2max fitness from his
 // hardest efforts, HR-adjusted: because he deliberately holds back, a run's avg HR
 // (relative to MAX_HR) sets how hard it was, and VDOT = VO2(pace) / %VO2max(HR).
-// Only uses genuinely hard runs (avg HR ≥ 80% max, ≥2mi, with HR) — the band where
-// the HR→VO2max relationship is reliable. Median across runs. NOTE: this is VO2max /
+// Only uses genuinely hard OUTDOOR runs (avg HR ≥ 80% max, ≥2mi, with HR) — the band
+// where the HR→VO2max relationship is reliable AND pace/distance are measured
+// independently by GPS. Treadmill strings carry `(tm)` and are excluded, because a
+// belt reading a few percent fast would inflate the engine estimate.
+// Median across runs. NOTE: this is VO2max /
 // engine fitness, NOT marathon readiness — the marathon is endurance/volume-limited.
 // A real race/TT in KNOWN_BENCHMARKS beats this and the caller shows it alongside.
 
@@ -63,6 +66,13 @@ export function estimateCurrentVDOT(profile: AthleteProfile | null): { vdot: num
   const estimates: { vdot: number; label: string }[] = [];
   for (const week of profile.weeks.slice(-8)) {
     for (const run of week.keyRuns) {
+      // Treadmill runs carry `(tm)` and are excluded: VDOT is a pace-derived number,
+      // and belt pace/distance are not independently measured (see isQualityEffort).
+      // A belt reading a few percent fast inflates the engine estimate, which is the
+      // one number the coach uses to decide whether the goal is realistic.
+      // Match only the structural marker immediately after pace. A quoted note can
+      // legitimately contain "(tm)" and must not turn an outdoor run into a treadmill.
+      if (/@\d+:\d+\/mi\(tm\)/.test(run)) continue;
       const paceMatch = run.match(/@(\d+):(\d+)\/mi/);
       const hrMatch = run.match(/\(HR(\d+)\)/);
       const distMatch = run.match(/([\d.]+)mi@/);
@@ -85,7 +95,7 @@ export function estimateCurrentVDOT(profile: AthleteProfile | null): { vdot: num
   const sorted = [...estimates].sort((a, b) => a.vdot - b.vdot);
   const median = sorted[Math.floor(sorted.length / 2)];
   const basis =
-    `${estimates.length} hard effort${estimates.length > 1 ? "s" : ""} HR-adjusted to max ${MAX_HR} ` +
+    `${estimates.length} outdoor hard effort${estimates.length > 1 ? "s" : ""} HR-adjusted to max ${MAX_HR} ` +
     `(median ${median.label}); VO2max/engine fitness — confirm with a race/TT`;
   return { vdot: median.vdot, basis };
 }
