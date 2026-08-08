@@ -27,12 +27,30 @@ export interface RecoveryDay {
 
 export const DEFAULT_RECOVERY_PATH = path.join(process.cwd(), "data", "recovery.csv");
 
+// ─── The canonical CSV schema, declared ONCE ──────────────────────────────────
+// parseRecoveryCsv and writeRecoveryCsv have to agree on column order exactly, and
+// used to do so via two independent hand-written lists: a positional destructure on
+// one side and a template string on the other. Add a field to one and not the other
+// and it is silently dropped on the next write, because the whole file is rewritten
+// rather than appended to. Deriving both from this list makes that impossible.
+//
+// Order IS the file format. Append only — never reorder, never remove.
+const CSV_COLUMNS = [
+  ["hrv", "hrv_ms"],
+  ["rhr", "rhr_bpm"],
+  ["sleepH", "sleep_hours"],
+  ["vo2max", "vo2max"],
+] as const;
+
+type CsvField = (typeof CSV_COLUMNS)[number][0];
+
 export function parseRecoveryCsv(content: string): RecoveryDay[] {
   const byDate = new Map<string, RecoveryDay>();
   for (const line of content.split("\n")) {
     const t = line.trim();
     if (!t || t.startsWith("#") || /^date[,;]/i.test(t)) continue;
-    const [date, hrv, rhr, sleep, vo2] = t.split(",").map(c => c?.trim());
+    const cells = t.split(",").map(c => c?.trim());
+    const date = cells[0];
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date ?? "")) continue;
     const parse = (v?: string) => {
       const n = parseFloat(v ?? "");
@@ -42,13 +60,12 @@ export function parseRecoveryCsv(content: string): RecoveryDay[] {
     // sleep landing hours after the morning HRV/RHR — must not wipe the earlier
     // fields; Apple Health posts metrics at different times of day).
     const prev = byDate.get(date);
-    byDate.set(date, {
-      date,
-      hrv: parse(hrv) ?? prev?.hrv,
-      rhr: parse(rhr) ?? prev?.rhr,
-      sleepH: parse(sleep) ?? prev?.sleepH,
-      vo2max: parse(vo2) ?? prev?.vo2max,
+    const merged: RecoveryDay = { date, ...prev };
+    CSV_COLUMNS.forEach(([field], i) => {
+      const value = parse(cells[i + 1]) ?? prev?.[field as CsvField];
+      if (value != null) merged[field as CsvField] = value;
     });
+    byDate.set(date, merged);
   }
   return [...byDate.values()].sort((a, b) => a.date.localeCompare(b.date));
 }
@@ -186,8 +203,12 @@ export function mergeRecoveryRows(existing: RecoveryDay[], incoming: RecoveryDay
 }
 
 export function writeRecoveryCsv(days: RecoveryDay[], canonicalPath: string = DEFAULT_RECOVERY_PATH): void {
-  const header = "# Daily recovery metrics — auto-merged (see docs/SETUP-HEALTHFIT.md §6).\ndate,hrv_ms,rhr_bpm,sleep_hours,vo2max";
-  const rows = days.map(d => `${d.date},${d.hrv ?? ""},${d.rhr ?? ""},${d.sleepH ?? ""},${d.vo2max ?? ""}`);
+  // Header and rows both derive from CSV_COLUMNS, so they cannot drift apart.
+  const header = "# Daily recovery metrics — auto-merged (see docs/SETUP-HEALTHFIT.md §6).\n"
+    + ["date", ...CSV_COLUMNS.map(([, header]) => header)].join(",");
+  const rows = days.map(d =>
+    [d.date, ...CSV_COLUMNS.map(([field]) => d[field as CsvField] ?? "")].join(","),
+  );
   fs.writeFileSync(canonicalPath, header + "\n" + rows.join("\n") + "\n");
 }
 

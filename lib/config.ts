@@ -157,10 +157,10 @@ export function isQualityEffort(opts: {
 }
 
 // Treadmill/indoor detection. The `trainer` flag is the primary signal; a run
-// with no GPS fix and zero elevation gain is the fallback heuristic. The flag is
-// context, not distrust: with GymKit belt-speed sync + a chest strap, indoor
-// pace/distance/HR are accurate. A treadmill is still worth knowing about because
-// it's flat, wind-free, and climate-controlled (no hill or heat stimulus).
+// with no GPS fix and zero elevation gain is the fallback heuristic. Indoor HR is
+// trusted (chest strap), but belt pace and distance are NOT — see isQualityEffort
+// above. A treadmill is also flat, wind-free and climate-controlled, so it carries
+// no hill or heat stimulus.
 export function isTreadmillRun(opts: {
   trainer?: boolean;
   hasGps?: boolean;
@@ -168,4 +168,24 @@ export function isTreadmillRun(opts: {
 }): boolean {
   if (opts.trainer === true) return true;
   return opts.hasGps === false && (opts.elevationGain ?? 0) === 0;
+}
+
+/**
+ * The same heuristic applied to a stored/Strava-shaped activity. Callers used to
+ * hand-roll the `hasGps` derivation at every site, which is three chances to get
+ * the GPS test subtly wrong and have a belt run silently classified as outdoor.
+ * That misclassification is not cosmetic: an indoor run counted as outdoor feeds
+ * belt pace into quality/VDOT decisions and contributes a structural 0 ft/mi to
+ * any hill-exposure average, diluting it exactly like a flat road run would.
+ */
+export function isTreadmillActivity(a: {
+  trainer?: boolean;
+  start_latlng?: number[] | null;
+  total_elevation_gain?: number;
+}): boolean {
+  return isTreadmillRun({
+    trainer: a.trainer,
+    hasGps: Array.isArray(a.start_latlng) && a.start_latlng.length > 0,
+    elevationGain: a.total_elevation_gain,
+  });
 }

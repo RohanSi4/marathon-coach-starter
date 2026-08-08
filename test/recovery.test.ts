@@ -6,7 +6,7 @@ import assert from "node:assert/strict";
 import fs from "fs";
 import path from "path";
 import os from "os";
-import { parseRecoveryCsv, recoveryReadiness, currentRestingHR, restingHRAsOf, mergeRecoveryRows, syncExternalRecovery } from "../lib/recovery";
+import { parseRecoveryCsv, writeRecoveryCsv, recoveryReadiness, currentRestingHR, restingHRAsOf, mergeRecoveryRows, syncExternalRecovery } from "../lib/recovery";
 
 function csvFor(days: Array<{ d: string; hrv?: number; rhr?: number; sleep?: number }>): string {
   return "date,hrv_ms,rhr_bpm,sleep_hours\n" +
@@ -118,4 +118,27 @@ test("restingHRAsOf: date-times use the athlete's local calendar date", () => {
   // Jul 8 at 8pm Pacific is Jul 9 UTC, but the Jul 9 morning reading is future data.
   assert.equal(restingHRAsOf(new Date("2026-07-09T03:00:00Z"), days), 48);
   assert.equal(restingHRAsOf("2026-01-01", days), 60); // no prior reading: config fallback
+});
+
+// The schema guard: parse and write derive their column order from one CSV_COLUMNS
+// list, so a field can never be written in one order and read back in another. This
+// round-trip is what would have failed when the two hand-written lists drifted.
+test("recovery CSV round-trips every field through write then parse", () => {
+  const days = [
+    { date: "2027-03-01", hrv: 88, rhr: 52, sleepH: 7.4, vo2max: 51.2 },
+    { date: "2027-03-02", hrv: 91, rhr: 51, sleepH: 8.1, vo2max: 51.3 },
+  ];
+  const file = path.join(fs.mkdtempSync(path.join(os.tmpdir(), "rec-")), "recovery.csv");
+  writeRecoveryCsv(days, file);
+  const back = parseRecoveryCsv(fs.readFileSync(file, "utf-8"));
+  assert.deepEqual(back, days);
+});
+
+test("a partial later row does not wipe fields set by an earlier row", () => {
+  // Apple Health posts metrics at different times of day, so an evening sleep-only
+  // row must merge into, not replace, the morning HRV/RHR row.
+  const parsed = parseRecoveryCsv(
+    "date,hrv_ms,rhr_bpm,sleep_hours,vo2max\n2027-03-01,88,52,,\n2027-03-01,,,7.4,\n",
+  );
+  assert.deepEqual(parsed, [{ date: "2027-03-01", hrv: 88, rhr: 52, sleepH: 7.4 }]);
 });

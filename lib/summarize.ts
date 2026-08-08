@@ -5,7 +5,7 @@
 // scanning of the joined note, shoe lookup, and the no-warmup read.
 // TRIMP rides in the sufferScore slot (display label changes, schema doesn't).
 import type { StoredActivity, ActivitySummary } from "./types";
-import { isTreadmillRun, coachTZ, shoeForDate } from "./config";
+import { isTreadmillActivity, coachTZ, shoeForDate, AEROBIC_THRESHOLD_BPM } from "./config";
 import { RUN_TYPES, fmtPace, fmtDuration } from "./weeks";
 import { INJURY_KEYWORDS, ILLNESS_KEYWORDS, FUELING_KEYWORDS, LIFESTYLE_KEYWORDS, SHOE_KEYWORDS, hasKeyword } from "./keywords";
 import { DayNote, noteDateKey } from "./notes";
@@ -21,11 +21,7 @@ export function summarize(a: StoredActivity, notes?: Map<string, DayNote>): Acti
   const isRun = RUN_TYPES.includes(a.type);
   const tz = coachTZ(date);
 
-  const isTreadmill = isRun && isTreadmillRun({
-    trainer: a.trainer,
-    hasGps: Array.isArray(a.start_latlng) && a.start_latlng.length > 0,
-    elevationGain: a.total_elevation_gain,
-  });
+  const isTreadmill = isRun && isTreadmillActivity(a);
 
   const note = notes?.get(noteDateKey(date));
   const athleteDesc = note?.athleteText.trim() || a.description?.trim() || undefined;
@@ -36,11 +32,14 @@ export function summarize(a: StoredActivity, notes?: Map<string, DayNote>): Acti
   const scanText = athleteDesc;
   const shoeName = isRun ? (note?.shoes ?? shoeForDate(date)) : undefined;
 
-  // noWarmup: first mile HR > 150 AND first mile NOT ≥30s/mi slower than overall
-  // avg pace (same semantics as the legacy Strava path).
+  // noWarmup: first mile above the aerobic ceiling AND first mile NOT ≥30s/mi
+  // slower than overall avg pace (same semantics as the legacy Strava path).
+  // The ceiling is AEROBIC_THRESHOLD_BPM rather than a literal 150: config.ts
+  // mandates re-checking that number every 4-6 weeks, and a hardcoded copy here
+  // would silently keep judging warmups against a stale ceiling after it moved.
   let noWarmup: boolean | undefined;
   const splits = a.splits;
-  if (splits && splits.length > 0 && splits[0].avgHR !== undefined && splits[0].avgHR > 150) {
+  if (splits && splits.length > 0 && splits[0].avgHR !== undefined && splits[0].avgHR > AEROBIC_THRESHOLD_BPM) {
     const split1Secs = parsePaceSecs(splits[0].pace);
     const avgSecs = a.average_speed > 0 ? 1609.344 / a.average_speed : undefined;
     if (split1Secs !== undefined && avgSecs !== undefined && split1Secs - avgSecs < 30) {
