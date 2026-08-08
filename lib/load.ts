@@ -19,6 +19,25 @@
 import type { StoredActivity } from "./types";
 import { coachTZ } from "./config";
 
+// ─── Why some activities are excluded from the load series ───────────────────
+// TRIMP is duration x HR-weighted intensity, which is sound for a training BOUT
+// and badly wrong for all-day low-intensity activity: the accumulated duration
+// swamps the trivial intensity. A 4.5-hour golf round at avg HR 112 (57% of max)
+// scores a TRIMP comparable to a hard long run, purely on elapsed time. Left in,
+// it inflates CTL/ATL and monotony/strain and makes a recovery day read as a hard
+// one.
+//
+// These activities remain stored, printed, and available as context, and they
+// still count as cross-training DAYS. They are excluded only from the
+// training-STRESS series. Anything summing TRIMP must filter through
+// countsAsLoad, or a clean chronic baseline gets compared against a dirty acute
+// figure.
+export const NON_LOAD_TYPES = ["Golf", "Walk", "Hike"];
+
+export function countsAsLoad(a: Pick<StoredActivity, "type">): boolean {
+  return !NON_LOAD_TYPES.includes(a.type);
+}
+
 export interface DailyLoad {
   date: string; // YYYY-MM-DD in the coaching TZ
   trimp: number;
@@ -40,7 +59,7 @@ function zonedDateStr(iso: string): string {
 export function dailyLoadSeries(activities: StoredActivity[], through?: string): DailyLoad[] {
   const byDay = new Map<string, number>();
   for (const a of activities) {
-    if (!a.trimp) continue;
+    if (!a.trimp || !countsAsLoad(a)) continue;
     const day = zonedDateStr(a.start_date);
     byDay.set(day, (byDay.get(day) ?? 0) + a.trimp);
   }

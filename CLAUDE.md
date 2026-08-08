@@ -243,7 +243,13 @@ log, never against a remembered chat message.
 - **Split recordings = ONE session:** a run starting ≤15min after the previous one
   ended is flagged `↳ CONTINUATION` (bathroom/water stop). Read the session, not
   the legs.
-- Treadmill runs tagged `(tm)`: with GymKit sync, pace/distance are trusted; the
-  flag is context (flat, climate-controlled, no hills or heat stimulus). Keep key
-  long runs outdoors.
+- **Treadmill runs tagged `(tm)`: HEART RATE ONLY.** Belt pace and distance are
+  context, never evidence, even with GymKit sync — GymKit relays the belt's
+  *commanded* speed and cannot see slip or calibration error, and a console-vs-watch
+  comparison measured the belt 5-15% optimistic, with the error growing at faster
+  speeds. Never feed indoor pace into VDOT, never call an indoor run "quality" on
+  pace, and never treat belt mileage as equal to outdoor mileage. Also flat and
+  climate-controlled: no hill or heat stimulus. Keep key long runs outdoors. If the
+  athlete ever reports the console numbers directly, that is a free calibration
+  test — record it.
 - Stopped minutes > 3 on a long run → possible fueling/GI issue; ask.

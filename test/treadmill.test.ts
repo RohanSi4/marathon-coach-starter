@@ -14,13 +14,14 @@ test("isTreadmillRun: outdoor run with GPS is not treadmill", () => {
   assert.equal(isTreadmillRun({ hasGps: true, elevationGain: 120 }), false);
 });
 
-test("treadmill quality pace is now TRUSTED (GymKit) — counts like outdoor", () => {
-  // GymKit belt-speed sync makes treadmill pace accurate, so a genuine sub-9:00
-  // effort counts as quality on pace, exactly like an outdoor run. HR 150 is below
-  // QUALITY_HR_BPM (155), so this isolates the pace branch.
+test("treadmill belt pace cannot make a low-HR run count as quality", () => {
+  // GymKit relays the belt's COMMANDED speed and cannot detect slip or calibration
+  // error, so belt pace is not an independent measurement. HR 150 is below
+  // QUALITY_HR_BPM (155), which isolates the pace branch: outdoors that pace earns
+  // quality, indoors it must not, because the trusted signal says the run was easy.
   const opts = { avgHR: 150, paceSecondsPerMile: 520, distanceMiles: 5 };
   assert.equal(isQualityEffort({ ...opts, isTreadmill: false }), true, "outdoor: pace counts");
-  assert.equal(isQualityEffort({ ...opts, isTreadmill: true }),  true, "treadmill: pace now trusted");
+  assert.equal(isQualityEffort({ ...opts, isTreadmill: true }), false, "treadmill: belt pace is ignored");
 });
 
 test("treadmill easy run stays easy — slow pace + low HR is not quality", () => {

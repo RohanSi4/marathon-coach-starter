@@ -6,6 +6,7 @@ import { loadRecovery, recoveryReadiness, recoveryDetail, vo2maxTrend } from "./
 import { describeStrideBlips } from "./fit/compute";
 import { annotateContinuations } from "./summarize";
 import { LIFT_TYPES } from "./aggregate";
+import { countsAsLoad } from "./load";
 
 const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
@@ -479,7 +480,12 @@ export function buildCoachingUserMessage(
     ? Math.round(runs.filter((r) => r.avgHR).reduce((s, r) => s + r.avgHR!, 0) / runs.filter((r) => r.avgHR).length)
     : null;
 
-  const thisWeekSuffer = activities.reduce((s, a) => s + (a.sufferScore ?? 0), 0);
+  // The THIRD path that sums TRIMP, and the one most easily missed when the
+  // NON_LOAD_TYPES exclusion is added: this feeds ATL directly, so an all-day
+  // low-intensity activity here is compared against a chronic baseline that
+  // already excludes it. A dirty acute against a clean chronic understates TSB
+  // and can fake a fatigued athlete.
+  const thisWeekSuffer = activities.filter(countsAsLoad).reduce((s, a) => s + (a.sufferScore ?? 0), 0);
   const currentWeekKey = weekKey(asOfDate);
   const load = computeTrainingLoad(athleteProfile, thisWeekSuffer, currentWeekKey);
   const acwr = computeACWR(athleteProfile, runMiles, currentWeekKey);

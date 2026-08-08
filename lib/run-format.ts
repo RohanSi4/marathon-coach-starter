@@ -34,7 +34,7 @@ export function compactRun(a: StravaActivity, detail: StravaActivity | null): st
   const pace = fmtPace(a.average_speed);
   const hr = a.average_heartrate ? `(HR${Math.round(a.average_heartrate)})` : "";
   const q = isQuality(a) ? "★" : "";
-  const tm = isTm(a) ? "(tm)" : "";  // treadmill tag (context) — pace is GymKit-accurate, INCLUDED in VDOT
+  const tm = isTm(a) ? "(tm)" : "";  // treadmill tag tells VDOT to reject belt-derived pace/distance
   const note = detail?.description?.trim()?.slice(0, 30);
   return `${q}${miles}mi@${pace}${tm}${hr}${note ? ` "${note}"` : ""}`;
 }

@@ -125,10 +125,11 @@ export const HISTORY_SINCE_DATE = new Date("2026-01-01T00:00:00-05:00");
 // threshold is loosened by 10 sec/mile per 5°F above 80°F, since the same effort
 // yields a slower pace in heat (outdoors only — treadmills are climate-controlled).
 //
-// Treadmill pace is trusted when the athlete's watch syncs belt speed via GymKit
-// (Apple Watch + a GymKit-enabled treadmill); a genuine fast treadmill effort then
-// counts as quality on pace, exactly like an outdoor run. `isTreadmill` is still
-// passed in, but only to keep the heat adjustment outdoors-only.
+// Treadmill pace and distance are CONTEXT ONLY, never evidence. GymKit faithfully
+// relays the belt's COMMANDED speed, but it cannot detect belt slip or calibration
+// error, and a measured console-vs-watch comparison put the belt 5-15% optimistic,
+// with the error growing at faster speeds. Heart rate from a chest strap stays
+// trustworthy, so indoor quality is classified by HR only, never by pace/distance.
 export function isQualityEffort(opts: {
   avgHR?: number;
   paceSecondsPerMile?: number;
@@ -138,10 +139,15 @@ export function isQualityEffort(opts: {
 }): boolean {
   if (opts.avgHR != null && opts.avgHR >= QUALITY_HR_BPM) return true;
 
+  // Belt pace/distance are not independent measurements, so they cannot create a
+  // quality effort when the trusted HR signal says the run stayed easy. This also
+  // keeps the heat adjustment below outdoors-only, since a treadmill room is
+  // climate-controlled.
+  if (opts.isTreadmill) return false;
+
   if (opts.paceSecondsPerMile != null && opts.paceSecondsPerMile > 0) {
     let threshold = QUALITY_PACE_SECS;
-    // Heat only slows pace outdoors; a treadmill room is climate-controlled.
-    if (!opts.isTreadmill && opts.avgTempF != null && opts.avgTempF > 80) {
+    if (opts.avgTempF != null && opts.avgTempF > 80) {
       threshold += Math.floor((opts.avgTempF - 80) / 5) * 10;
     }
     return opts.paceSecondsPerMile < threshold && opts.distanceMiles >= 2;

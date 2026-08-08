@@ -9,6 +9,7 @@ import { weekKey, RUN_TYPES } from "./weeks";
 import { coachTZ } from "./config";
 import { INJURY_KEYWORDS, hasKeyword } from "./keywords";
 import { compactRun, isQuality } from "./run-format";
+import { countsAsLoad } from "./load";
 
 export const LIFT_TYPES = ["WeightTraining", "Crossfit", "Strength"];
 
@@ -66,7 +67,11 @@ export function aggregateWeeks(all: Aggregatable[]): AggregateResult {
       : undefined;
 
     // TRIMP (FIT path) or suffer score (legacy Strava rows) — same slot.
-    const sufferTotal = activities.reduce((s, a) => s + (a.suffer_score ?? a.trimp ?? 0), 0);
+    // Same NON_LOAD_TYPES exclusion as the daily series in lib/load.ts: an all-day
+    // low-intensity activity accumulates training stress it never earned.
+    const sufferTotal = activities
+      .filter(countsAsLoad)
+      .reduce((s, a) => s + (a.suffer_score ?? a.trimp ?? 0), 0);
     const qualityRuns = weekRuns.filter(r => isQuality(r)).length;
 
     // Key runs: longest + quality efforts (up to 4 compact entries).
