@@ -11,6 +11,15 @@ This is the reusable machinery from my own marathon coaching system. It starts
 empty, interviews you about your goals and training history, then builds plans
 from your data. My workouts, locations, and health notes are not included.
 
+## Maintenance status
+
+This repository is a stable reference snapshot, not a feature-for-feature
+mirror of the private coaching system. It receives security fixes, fixes for
+data corruption, and portability fixes that can be verified with generic test
+data. Athlete-specific integrations and ongoing product features stay private;
+there is no parity roadmap. Evaluate the included workflow as it exists before
+building personal training history around it.
+
 ## What you get
 
 - A coach with memory through versioned athlete, plan, and adherence files
